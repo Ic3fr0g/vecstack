@@ -853,7 +853,7 @@ class StackingTransformer(BaseEstimator, TransformerMixin):
 
     def _random_choice(self, n, size, bound=2**30):
         """
-        Memory efficient (but slower) version of np.random.choice
+        Memory efficient substitute for np.random.choice without replacement
 
         Parameters:
         ===========
@@ -870,12 +870,21 @@ class StackingTransformer(BaseEstimator, TransformerMixin):
         ========
         ids : 1d numpy array of shape (size, ) dtype=np.int32
         """
-        ids = []
-        while len(ids) < size:
-            rnd = np.random.randint(min(bound, n))
-            if rnd not in ids:
-                ids.append(rnd)
-        return np.array(ids, dtype=np.int32)
+        try:
+            if n < size:
+                raise ValueError('Drawing without replacement: '
+                                 '``n`` cannot be less than ``size``')
+
+            ids = []
+            while len(ids) < size:
+                rnd = np.random.randint(min(bound, n))
+                if rnd not in ids:
+                    ids.append(rnd)
+            return np.array(ids, dtype=np.int32)
+
+        except Exception:
+            raise ValueError('Internal error. '
+                             'Please save traceback and inform developers.')
 
     # -------------------------------------------------------------------------
     # -------------------------------------------------------------------------
